@@ -6,7 +6,6 @@ public class StaffComment {
 	private String staffName;
 	private String comment;
 	private String genericId;
-	private String answerId;
 	private LocalDateTime createdAt;
 	private boolean isQuestion;
 	
