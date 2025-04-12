@@ -51,12 +51,12 @@ public class StaffHomePage {
 	    primaryStage.setScene(userScene);
 	    primaryStage.setTitle("Staff Page");
 
-	    // ==== Top Area (Header) ====
+	    // Top Area 
 	    Label userLabel = new Label("Hello, Staff!");
 	    userLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 	    layout.setTop(userLabel);
 
-	    // ==== Left Side (List of Questions) ====
+	    // Left Side 
 	    questionListView.setPrefWidth(300);
 	    questionListView.setCellFactory(param -> new ListCell<Question>() {
 	        @Override
@@ -121,7 +121,7 @@ public class StaffHomePage {
 	    });
 	    layout.setLeft(questionListView);
 
-	    // ==== Center (Answers) ====
+	    // Center
 	    answerListView.setCellFactory(param -> new ListCell<Answer>() {
 	        @Override
 	        protected void updateItem(Answer answer, boolean empty) {
@@ -148,7 +148,7 @@ public class StaffHomePage {
 	    centerContent.getChildren().addAll(questionTitle,questionTextField,answerTitle,answerListView);
 	    layout.setCenter(centerContent);
 	    
-	    // ==== Right Side (Actions / Logout) ====
+	    // Right Side 
 	    VBox rightPanel = new VBox(10);
 	    Button logoutButton = new Button("Logout");
 	    logoutButton.setOnAction(a -> new UserLoginPage(databaseHelper).show(primaryStage));
