@@ -99,23 +99,33 @@ public class DatabaseHelper {
 		statement.execute(roleChangesTable);
 		
 		String staffTable = "CREATE TABLE IF NOT EXISTS StaffTable (" +"id INT AUTO_INCREMENT PRIMARY KEY, "
-				+ "StaffId VARCHAR(255), " + "comment VARCHAR(255)," + "genericId INT," + "createdAt VARCHAR(255)," + "isQuestion INT";
+				+ "StaffId VARCHAR(255), " + "comment VARCHAR(255)," + "genericId INT," + "createdAt VARCHAR(255)," + "isQuestion INT)";
 		statement.execute(staffTable);
 	}
 
-	public void addStaffComment(String staffId, String comment, int genericId, String createdAt, int isQuestion) throws SQLException {
+	public void addComment(User user, String comment, int genericId, String createdAt, int isQuestion) throws SQLException {
 	    String query = "INSERT INTO StaffTable (StaffId, comment, genericId, createdAt, isQuestion) VALUES (?, ?, ?, ?, ?)";
-	    
-	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        pstmt.setString(1, staffId);
-	        pstmt.setString(2, comment);
+	    try(PreparedStatement pstmt = connection.prepareStatement(query)) {
+	    	pstmt.setString(1, user.getUserName());
+	    	pstmt.setString(2, comment);
 	        pstmt.setInt(3, genericId);
 	        pstmt.setString(4, createdAt);
 	        pstmt.setInt(5, isQuestion);
-	        
-	        int rows = pstmt.executeUpdate();
-	        System.out.println("Inserted rows: " + rows); 
+	    	pstmt.executeUpdate();
 	    }
+	}
+	
+	public String getComment(int genericId) throws SQLException {
+	    String query = "SELECT comment FROM staffTable WHERE genericId = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setInt(1, genericId);
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getString("comment");
+	            }
+	        }
+	    }
+	    return null; 
 	}
 	
 	// adds a new column in InvitationCodes table that stores roles given to new

@@ -18,6 +18,8 @@ public class StaffComment {
 		this.isQuestion = isQuestion;
 	}
 	
+	
+	
 	public String getStaffName() {
 	    return staffName;
 	}

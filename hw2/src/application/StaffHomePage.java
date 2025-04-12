@@ -2,6 +2,8 @@ package application;
 
 
 
+import java.sql.SQLException;
+
 import databasePart1.DatabaseHelper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -34,6 +36,8 @@ public class StaffHomePage {
     private String questionUserName = null;
     private Label questionUserNameL = new Label();
     private Label questionUserRole = new Label();
+    private Label answerUserNameL = new Label();
+    private Label answerUserRole = new Label();
     
 	public StaffHomePage(DatabaseHelper databaseHelper) {
 		this.databaseHelper = databaseHelper;
@@ -87,19 +91,24 @@ public class StaffHomePage {
 	    answerListView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
 	        if (newSelection != null) {
 
-	            // You can also get the answer's author, for example:
-	            String authorName = databaseHelper.getUserName(newSelection.getUserId());
-	            System.out.println("Written by: " + authorName);
+	            answerUserNameL.setText("User name: " + databaseHelper.getUserName(questionUserId));
+	            answerUserRole.setText("User role: " + databaseHelper.getUserRole(databaseHelper.getUserName(questionUserId)));
+
 	            
 	            answerListView.setOnMouseClicked(event -> {
 	                if (event.getClickCount() == 2) {
 	                    Answer selectedAnswer = answerListView.getSelectionModel().getSelectedItem();
 	    	            System.out.println("Selected Answer ID: " + newSelection.getId());
 	    	            System.out.println("Answer Text: " + newSelection.getAnswerText());
-	    	            System.out.println("User ID: " + newSelection.getUserId());
+	    	            System.out.println("Username: " + databaseHelper.getUserName(newSelection.getUserId())); 
 	    	            System.out.println("Accepted: " + newSelection.isAccepted());
         	            Answer tempAns = new Answer(newSelection.getId(),newSelection.getQuestionId(),newSelection.getUserId(),newSelection.getAnswerText(),newSelection.isAccepted());
-                        showCommentPopup(tempAns); // Or whatever method you want
+                        try {
+							showCommentPopup(tempAns, user);
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} 
 
 	                    if (selectedAnswer != null) {
 
@@ -113,7 +122,6 @@ public class StaffHomePage {
 	    layout.setLeft(questionListView);
 
 	    // ==== Center (Answers) ====
-	    
 	    answerListView.setCellFactory(param -> new ListCell<Answer>() {
 	        @Override
 	        protected void updateItem(Answer answer, boolean empty) {
@@ -148,34 +156,18 @@ public class StaffHomePage {
 	    QuestionTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 	    questionUserNameL.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 	    questionUserRole.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+	    questionUserNameL.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+	    questionUserRole.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
 
 
 	    
-	    rightPanel.getChildren().addAll(questionTitle,questionUserNameL,questionUserRole,logoutButton);
+	    rightPanel.getChildren().addAll(questionTitle,questionUserNameL,questionUserRole,logoutButton,answerTitle,answerUserNameL);
 	    layout.setRight(rightPanel);
 	    
 	    loadAllQuestions();
 	}
 		
-	private VBox CreateQuestionPanel() {
-		 VBox panel = new VBox(10);
-	     panel.setPadding(new Insets(10));
-	    // Set the cell factory HERE
-	    questionListView.setCellFactory(param -> new ListCell<Question>() {
-	        @Override
-	        protected void updateItem(Question question, boolean empty) {
-	            super.updateItem(question, empty);
-	            if (empty || question == null) {
-	                setText(null);
-	            } else {
-	                setText("Q: " + question.getQuestionText());
-	            }
-	        }
-	    });
-	    
-	    panel.getChildren().addAll();
-		return panel;
-	}
+
 	
     //Refreshes UI to show changes in answers
     private void loadAnswersForQuestion(int questionId) {
@@ -187,25 +179,38 @@ public class StaffHomePage {
     	questionsInView.addAll(databaseHelper.getAllQuestions());
     }
     
-    private void showCommentPopup(Answer answer) {
+    private void showCommentPopup(Answer answer, User user) throws SQLException {
     	//Layout details
     	Stage commentPopup = new Stage();
     	commentPopup.setTitle("Comment details");
     	
     	//Answer:
-    	Label answerTitle = new Label("Answer by User ID: " + answer.getUserId());
+    	Label answerTitle = new Label("Answer by User: " + databaseHelper.getUserName(answer.getUserId()));
     	answerTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
     	TextArea answerTextArea = new TextArea(answer.getAnswerText());
         answerTextArea.setEditable(false);
+        answerTextArea.setMaxHeight(200);
         
         //Comment:
         Label commentLabel = new Label("Write comment here:");
         commentLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        TextField commentTextField = new TextField();
+        TextField commentTextField = new TextField(databaseHelper.getComment(answer.getId()));
         Button confirmButton = new Button("Confirm comment");
         
-        confirmButton.setOnAction( a -> {
-        	commentTextField.getText();
+        confirmButton.setOnAction(a -> {
+            String commentText = commentTextField.getText();
+            if (!commentText.trim().isEmpty()) {
+                try {
+                    String createdAt = java.time.LocalDateTime.now().toString();
+                    int isQuestion = 0; 
+                    databaseHelper.addComment(user, commentText, answer.getId(), createdAt, isQuestion);
+                    commentPopup.close(); 
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Empty comment. Nothing saved.");
+            }
         });
         
         VBox popupLayout = new VBox(10);
